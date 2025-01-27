@@ -7,19 +7,21 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import MapView, { Marker } from "react-native-maps";
+import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import React, { useEffect, useRef, useState } from "react";
 
 import Geolocation from "@react-native-community/geolocation";
 import Icon from "react-native-vector-icons/Ionicons";
+import ProfileModal from "@/components/ProfileModal";
+import { captureRef } from "react-native-view-shot";
+import styles from "@/assets/styles";
 
-const CustomMarker = () => (
+const CustomMarker = ({ count }: { count: number }) => (
   <View style={styles.markerContainer}>
     <View style={styles.markerBubble}>
       <Icon name="flash" size={20} color="#fff" />
-      <Text style={styles.chargerTypeText}>test</Text>
     </View>
-    <View style={styles.markerArrow} />
+    <View> {count || ""}</View>
   </View>
 );
 
@@ -32,7 +34,14 @@ const chargers = [
     distance_metrics: "metres",
     latitude: 28.6315,
     longitude: 77.2167,
-    connector_types: ["lvl1dc-2", "lvl2dc-1", "normalac-1"],
+    connector_types: [
+      "lvl1dc-2",
+      "lvl2dc-1",
+      "normalac-1",
+      "lvl1dc-2",
+      "lvl2dc-1",
+      "normalac-1",
+    ],
   },
   {
     id: "a002",
@@ -89,18 +98,40 @@ function HomeScreen() {
     );
     setSelectedCard(selectedCard === id ? null : id);
   };
+  const captureAndUploadMapshot = async () => {
+    try {
+      const uri = await captureRef(mapRef, {
+        format: "png",
+        quality: 0.8,
+        result: "tmpfile",
+      });
+      console.log("Screenshot captured at:", uri);
+    } catch (error) {
+      console.error("Error capturing or uploading screenshot:", error);
+    }
+  };
 
   const renderChargerTypes = (types: string[]) => (
-    <View style={styles.chargerTypesContainer}>
-      {types.map((type, index) => (
-        <View key={index} style={styles.chargerTypeItem}>
+    <FlatList
+      data={types}
+      keyExtractor={(item, index) => `${item}-${index}`}
+      renderItem={({ item }) => (
+        <View style={styles.chargerTypeItem}>
           <Icon name="flash" size={20} color="#fff" />
           <Text style={styles.chargerTypeText}>
-            {chargerTypeDetails[type]?.label || type}
+            {chargerTypeDetails[item]?.label || item}
+          </Text>
+          <Text
+            style={[styles.chargerTypeText, { flex: 1, textAlign: "right" }]}
+          >
+            {`${item?.split("-")[1]}X`}
           </Text>
         </View>
-      ))}
-    </View>
+      )}
+      showsVerticalScrollIndicator={true}
+      contentContainerStyle={{ paddingBottom: 10 }}
+      style={{ maxHeight: 150 }}
+    />
   );
 
   return (
@@ -108,6 +139,9 @@ function HomeScreen() {
       <MapView
         ref={mapRef}
         style={styles.map}
+        provider={PROVIDER_GOOGLE}
+        showsUserLocation={true}
+        showsMyLocationButton={true}
         initialRegion={{
           latitude: 28.6315,
           longitude: 77.2167,
@@ -125,11 +159,10 @@ function HomeScreen() {
             title={charger.name}
             description={`${charger.distance} ${charger.distance_metrics}`}
           >
-            <CustomMarker />
+            <CustomMarker count={charger.connector_types.length} />
           </Marker>
         ))}
       </MapView>
-
       <View style={styles.searchContainer}>
         <Icon name="search" size={20} color="#666" style={styles.searchIcon} />
         <TextInput
@@ -140,173 +173,59 @@ function HomeScreen() {
           onChangeText={(text) => setSearch(text)}
         />
       </View>
-
+      <View style={styles.profileContainer}>
+        <ProfileModal />
+      </View>
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={captureAndUploadMapshot}
+        activeOpacity={0.8}
+      >
+        <Icon name="camera" size={24} color="#fff" />
+      </TouchableOpacity>
       <View style={styles.cardContainer}>
         <FlatList
           data={chargers}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.card}
-              onPress={() =>
-                focusLocation(item.latitude, item.longitude, item.id)
-              }
-              activeOpacity={0.7}
-            >
-              <View style={styles.cardHeader}>
-                <Text style={styles.cardTitle}>{item.name}</Text>
-                <Icon
-                  name={
-                    selectedCard === item.id
-                      ? "chevron-down"
-                      : "chevron-forward"
-                  }
-                  size={20}
-                  color="#4CAF50"
-                />
-              </View>
-              <Text style={styles.cardSubtitle}>{item.address}</Text>
-              <Text style={styles.cardDistance}>
-                {item.distance} {item.distance_metrics} away
-              </Text>
+            <View style={styles.cardwrapper}>
+              <TouchableOpacity
+                style={styles.card}
+                onPress={() =>
+                  focusLocation(item.latitude, item.longitude, item.id)
+                }
+                activeOpacity={0.7}
+              >
+                <View style={styles.cardHeader}>
+                  <Text style={styles.cardTitle}>{item.name}</Text>
+                  <Icon
+                    name="flash"
+                    size={26}
+                    color="#4CAF50"
+                    style={styles.connectorIcon}
+                  />
+                </View>
+                <Text style={styles.cardSubtitle}>{item.address}</Text>
+                <Text style={styles.cardDistance}>
+                  {item.distance} {item.distance_metrics} away
+                </Text>
+              </TouchableOpacity>
+              <Text style={styles.cardTitle2}>SUPPORTED CONNECTORS</Text>
+
               <View style={styles.connectorContainer}>
-                <Icon
-                  name="flash"
-                  size={16}
-                  color="#4CAF50"
-                  style={styles.connectorIcon}
-                />
                 <Text style={styles.cardConnectors}>
                   {item.connector_types.length} Charger Types Available
                 </Text>
               </View>
-              {selectedCard === item.id &&
-                renderChargerTypes(item.connector_types)}
-            </TouchableOpacity>
+              <View>{renderChargerTypes(item.connector_types)}</View>
+            </View>
           )}
+          horizontal={true} // Enable horizontal scrolling
+          showsHorizontalScrollIndicator={false} // Optional: Hide the horizontal scrollbar
+          contentContainerStyle={{ paddingHorizontal: 10 }}
         />
       </View>
     </View>
   );
 }
 export default HomeScreen;
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  map: {
-    width: "100%",
-    height: "100%",
-  },
-  markerContainer: {
-    alignItems: "center",
-  },
-  markerBubble: {
-    width: 40,
-    height: 40,
-    backgroundColor: "#4CAF50",
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 2,
-    borderColor: "#fff",
-  },
-  markerArrow: {
-    width: 0,
-    height: 0,
-    backgroundColor: "transparent",
-    borderStyle: "solid",
-    borderLeftWidth: 8,
-    borderRightWidth: 8,
-    borderTopWidth: 16,
-    borderLeftColor: "transparent",
-    borderRightColor: "transparent",
-    borderTopColor: "#4CAF50",
-    marginTop: -2,
-  },
-  searchContainer: {
-    position: "absolute",
-    top: 20,
-    left: 20,
-    right: 20,
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#1E1E1E",
-    borderRadius: 10,
-    padding: 10,
-    elevation: 5,
-  },
-  searchIcon: {
-    marginRight: 10,
-  },
-  searchInput: {
-    flex: 1,
-    color: "#fff",
-  },
-  cardContainer: {
-    position: "absolute",
-    bottom: 0,
-    width: "100%",
-    backgroundColor: "#121212",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    maxHeight: Dimensions.get("window").height * 0.4,
-  },
-  card: {
-    marginBottom: 15,
-    padding: 15,
-    borderRadius: 10,
-    backgroundColor: "#1E1E1E",
-    elevation: 3,
-  },
-  cardHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  cardTitle: {
-    fontWeight: "bold",
-    fontSize: 16,
-    color: "#fff",
-    flex: 1,
-  },
-  cardSubtitle: {
-    color: "#888",
-    marginTop: 5,
-  },
-  cardDistance: {
-    color: "#4CAF50",
-    marginTop: 5,
-    fontSize: 14,
-  },
-  connectorContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 8,
-  },
-  connectorIcon: {
-    marginRight: 6,
-  },
-  cardConnectors: {
-    color: "#888",
-    flex: 1,
-  },
-  chargerTypesContainer: {
-    marginTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: "#333",
-    paddingTop: 12,
-  },
-  chargerTypeItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 6,
-  },
-  chargerTypeText: {
-    color: "#fff",
-    marginLeft: 10,
-    fontSize: 14,
-  },
-});

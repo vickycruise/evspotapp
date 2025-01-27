@@ -1,0 +1,161 @@
+import { Dimensions, StyleSheet } from "react-native";
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  map: {
+    width: "100%",
+    height: "100%",
+  },
+  markerContainer: {
+    alignItems: "center",
+  },
+  markerBubble: {
+    width: 40,
+    height: 40,
+    backgroundColor: "#4CAF50",
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "#fff",
+  },
+  markerArrow: {
+    width: 0,
+    height: 0,
+    backgroundColor: "transparent",
+    borderStyle: "solid",
+    borderLeftWidth: 8,
+    borderRightWidth: 8,
+    borderTopWidth: 16,
+    borderLeftColor: "transparent",
+    borderRightColor: "transparent",
+    borderTopColor: "#4CAF50",
+    marginTop: -2,
+  },
+  searchContainer: {
+    position: "absolute",
+    top: 20,
+    left: 20,
+    right: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#1E1E1E",
+    borderRadius: 10,
+    padding: 10,
+    elevation: 5,
+  },
+  searchIcon: {
+    marginRight: 10,
+  },
+  searchInput: {
+    flex: 1,
+    color: "#fff",
+  },
+  cardContainer: {
+    position: "absolute",
+    bottom: 0,
+    width: "100%",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 10,
+    maxHeight: Dimensions.get("window").height * 0.4,
+  },
+  cardwrapper: {
+    backgroundColor: "#121212",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    flex: 1,
+    marginRight: 10,
+    padding: 10,
+  },
+  card: {
+    marginBottom: 10,
+    padding: 5,
+    borderRadius: 10,
+    backgroundColor: "#1E1E1E",
+    elevation: 3,
+  },
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  cardTitle: {
+    fontWeight: "bold",
+    fontSize: 16,
+    color: "#fff",
+    width: "80%",
+  },
+  cardTitle2: {
+    fontWeight: "bold",
+    fontSize: 18,
+    color: "#4CAF50",
+    flex: 1,
+  },
+  cardSubtitle: {
+    color: "#888",
+    marginTop: 5,
+  },
+  cardDistance: {
+    color: "#4CAF50",
+    marginTop: 5,
+    fontSize: 14,
+  },
+  connectorContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 8,
+  },
+  connectorIcon: {
+    marginRight: 6,
+  },
+  cardConnectors: {
+    color: "#888",
+    flex: 1,
+  },
+  chargerTypesContainer: {
+    margin: 12,
+    borderTopWidth: 1,
+    borderTopColor: "#333",
+    paddingTop: 12,
+  },
+  chargerTypeItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 6,
+  },
+  chargerTypeText: {
+    color: "#fff",
+    marginRight: 40,
+    fontSize: 15,
+  },
+  fab: {
+    position: "absolute",
+    right: 20,
+    bottom: Dimensions.get("window").height * 0.42, // Position it just above the card container
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#4CAF50",
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 8,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+  },
+  profileContainer: {
+    position: "absolute",
+    top: 40,
+    right: 20,
+    zIndex: 1,
+  },
+});
+export default styles;
