@@ -71,12 +71,9 @@ const chargerTypeDetails: ChargerTypeDetails = {
   "normalac-1": { icon: "battery-charging", label: "Normal AC" },
 };
 
-export default function HomeScreen() {
+function HomeScreen() {
   const [search, setSearch] = useState("");
-  const [currentLocation, setCurrentLocation] = useState<{
-    latitude: number;
-    longitude: number;
-  } | null>(null);
+
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const mapRef = useRef<MapView | null>(null);
 
@@ -105,20 +102,7 @@ export default function HomeScreen() {
       ))}
     </View>
   );
-  useEffect(() => {
-    Geolocation?.getCurrentPosition(
-      (position) => {
-        setCurrentLocation({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        });
-      },
-      (error) => {
-        console.log(error.code, error.message);
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
-    );
-  }, []);
+
   return (
     <View style={styles.container}>
       <MapView
@@ -205,7 +189,7 @@ export default function HomeScreen() {
     </View>
   );
 }
-
+export default HomeScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
