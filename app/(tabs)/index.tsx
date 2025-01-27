@@ -1,5 +1,4 @@
 import {
-  Animated,
   Dimensions,
   FlatList,
   StyleSheet,
@@ -9,8 +8,9 @@ import {
   View,
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
+import Geolocation from "@react-native-community/geolocation";
 import Icon from "react-native-vector-icons/Ionicons";
 
 const CustomMarker = () => (
@@ -73,6 +73,10 @@ const chargerTypeDetails: ChargerTypeDetails = {
 
 export default function HomeScreen() {
   const [search, setSearch] = useState("");
+  const [currentLocation, setCurrentLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const mapRef = useRef<MapView | null>(null);
 
@@ -101,7 +105,20 @@ export default function HomeScreen() {
       ))}
     </View>
   );
-
+  useEffect(() => {
+    Geolocation?.getCurrentPosition(
+      (position) => {
+        setCurrentLocation({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        });
+      },
+      (error) => {
+        console.log(error.code, error.message);
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+    );
+  }, []);
   return (
     <View style={styles.container}>
       <MapView
