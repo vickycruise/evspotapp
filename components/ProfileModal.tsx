@@ -15,48 +15,87 @@ import React, { useEffect, useState } from "react";
 
 import { Colors } from "@/constants/Colors";
 import Icon from "react-native-vector-icons/Ionicons";
+import { google } from "googleapis";
 import styles from "@/assets/styles";
 
 const ProfileModal = () => {
   const [modalVisible, setModalVisible] = useState(false);
-  const [userInfo, setUserInfo] = useState(null);
 
-  const toggleModal = () => {
-    setModalVisible(!modalVisible);
-  };
+  const [token, setToken] = useState("");
+
+
+  const toggleModal = () => setModalVisible(!modalVisible);
+
   useEffect(() => {
-    GoogleSignin &&
-      GoogleSignin.configure({
-        webClientId:
-          "211050989236-83pm2hcol3lonjcdcqa0nrd2coems0rt.apps.googleusercontent.com",
-      });
+    GoogleSignin.configure({
+      webClientId:
+        "211050989236-83pm2hcol3lonjcdcqa0nrd2coems0rt.apps.googleusercontent.com", 
+    });
   }, []);
+
   const handleGoogleSignIn = async () => {
     try {
       await GoogleSignin.hasPlayServices();
       const userInfo = await GoogleSignin.signIn();
       console.log("User Info:", userInfo);
-    } catch (error) {
-      if ((error as any).code === statusCodes.SIGN_IN_CANCELLED) {
-        Alert.alert("Cancelled", "User cancelled the login process.");
-      } else if ((error as any).code === statusCodes.IN_PROGRESS) {
-        Alert.alert("In Progress", "Sign-in process is already in progress.");
-      } else if (
-        (error as any).code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE
-      ) {
-        Alert.alert("Error", "Google Play Services is not available.");
-      } else {
-        Alert.alert("Error", "An unknown error occurred.");
-        console.error(error);
+
+      const idToken = userInfo.data?.idToken; 
+      if (idToken) setToken(idToken);
+    } catch (error: any) {
+      switch (error.code) {
+        case statusCodes.SIGN_IN_CANCELLED:
+          Alert.alert("Cancelled", "User cancelled the login process.");
+          break;
+        case statusCodes.IN_PROGRESS:
+          Alert.alert("In Progress", "Sign-in process is already in progress.");
+          break;
+        case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
+          Alert.alert("Error", "Google Play Services is not available.");
+          break;
+        default:
+          Alert.alert("Error", "An unknown error occurred.");
+          console.error(error);
       }
     }
   };
+
+  const uploadFileToDrive = async (image: string,token:string) => {
+    try {
+      if (!token) {
+        throw new Error("Authentication failed, no ID token available.");
+      }
+
+      const auth = new google.auth.OAuth2();
+      auth.setCredentials({ id_token: token });
+
+      const driveService = google.drive({ version: "v3", auth });
+      const fs = require("fs");
+      const fileMetadata = { name: "photo.png" };
+      const media = {
+        mimeType: "image/jpeg",
+        body: fs.createReadStream(image),
+      };
+
+      const response = await driveService.files.create({
+        requestBody: fileMetadata,
+        media: media,
+        fields: "id",
+      });
+
+      console.log("Uploaded File ID:", response.data.id);
+      return response.data.id;
+    } catch (err) {
+      console.error("Upload Error:", err);
+      Alert.alert("Error", "Failed to upload the file.");
+    }
+  };
+
   return (
     <View
       style={{
         marginTop: 50,
         marginRight: 20,
-        backgroundColor: "#4CAF50",
+        backgroundColor: Colors.dark.background,
         padding: 10,
         borderRadius: 10,
         flexDirection: "row",
@@ -64,16 +103,12 @@ const ProfileModal = () => {
       }}
     >
       <TouchableOpacity onPress={toggleModal}>
-        <Icon
-          name="person-circle-outline"
-          size={30}
-          color={Colors.light.background}
-        />
+        <Icon name="person-circle-outline" size={30} color="white" />
       </TouchableOpacity>
 
       <Modal
         animationType="slide"
-        transparent={true}
+        transparent
         visible={modalVisible}
         onRequestClose={toggleModal}
       >
@@ -96,23 +131,20 @@ const ProfileModal = () => {
           >
             <Text style={{ marginBottom: 20 }}>Sign in with Google</Text>
 
-            <View style={styles.container}>
-              <GoogleSigninButton
-                size={GoogleSigninButton.Size.Wide}
-                color={GoogleSigninButton.Color.Dark}
-                onPress={handleGoogleSignIn}
-              >
-                Googles
-              </GoogleSigninButton>
-            </View>
-            {userInfo && (
-              <View style={{ marginTop: 20 }}>
-                <Text>Welcome</Text>
+            <GoogleSigninButton
+              size={GoogleSigninButton.Size.Wide}
+              color={GoogleSigninButton.Color.Dark}
+              onPress={handleGoogleSignIn}
+            />
+
+            {token && (
+              <View style={{ marginTop: 20, alignItems: "center" }}>
+                <Text style={{ marginTop: 10 }}>Welcome</Text>
               </View>
             )}
 
             <TouchableOpacity onPress={toggleModal} style={{ marginTop: 20 }}>
-              <Text>Close</Text>
+              <Text style={{ color: Colors.dark.background }}>Close</Text>
             </TouchableOpacity>
           </View>
         </View>

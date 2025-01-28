@@ -1,19 +1,20 @@
+import * as FileSystem from "expo-file-system";
+
 import {
-  Dimensions,
+  Alert,
   FlatList,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 
-import Geolocation from "@react-native-community/geolocation";
 import Icon from "react-native-vector-icons/Ionicons";
 import ProfileModal from "@/components/ProfileModal";
 import { captureRef } from "react-native-view-shot";
+import { google } from "googleapis";
 import styles from "@/assets/styles";
 
 const CustomMarker = ({ count }: { count: number }) => (
@@ -106,11 +107,45 @@ function HomeScreen() {
         result: "tmpfile",
       });
       console.log("Screenshot captured at:", uri);
+      const fileData = await FileSystem.readAsStringAsync(uri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      const fileBlob = `data:image/png;base64,${fileData}`;
+      const data = await uploadFileToDrive(fileBlob, "");
     } catch (error) {
       console.error("Error capturing or uploading screenshot:", error);
     }
   };
+  const uploadFileToDrive = async (image: string, token: string) => {
+    try {
+      if (!token) {
+        throw new Error("Authentication failed, no ID token available.");
+      }
 
+      const auth = new google.auth.OAuth2();
+      auth.setCredentials({ id_token: token });
+
+      const driveService = google.drive({ version: "v3", auth });
+      const fs = require("fs");
+      const fileMetadata = { name: "photo.png" };
+      const media = {
+        mimeType: "image/png",
+        body: fs.createReadStream(image),
+      };
+
+      const response = await driveService.files.create({
+        requestBody: fileMetadata,
+        media: media,
+        fields: "id",
+      });
+
+      console.log("Uploaded File ID:", response.data.id);
+      return response.data.id;
+    } catch (err) {
+      console.error("Upload Error:", err);
+      Alert.alert("Error", "Failed to upload the file.");
+    }
+  };
   const renderChargerTypes = (types: string[]) => (
     <FlatList
       data={types}
@@ -220,8 +255,8 @@ function HomeScreen() {
               <View>{renderChargerTypes(item.connector_types)}</View>
             </View>
           )}
-          horizontal={true} // Enable horizontal scrolling
-          showsHorizontalScrollIndicator={false} // Optional: Hide the horizontal scrollbar
+          horizontal={true}
+          showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ paddingHorizontal: 10 }}
         />
       </View>
