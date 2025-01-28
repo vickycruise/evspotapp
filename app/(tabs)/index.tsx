@@ -112,6 +112,7 @@ function HomeScreen() {
       });
       const fileBlob = `data:image/png;base64,${fileData}`;
       const data = await uploadFileToDrive(fileBlob, "");
+
     } catch (error) {
       console.error("Error capturing or uploading screenshot:", error);
     }
@@ -121,10 +122,8 @@ function HomeScreen() {
       if (!token) {
         throw new Error("Authentication failed, no ID token available.");
       }
-
       const auth = new google.auth.OAuth2();
       auth.setCredentials({ id_token: token });
-
       const driveService = google.drive({ version: "v3", auth });
       const fs = require("fs");
       const fileMetadata = { name: "photo.png" };
@@ -132,7 +131,6 @@ function HomeScreen() {
         mimeType: "image/png",
         body: fs.createReadStream(image),
       };
-
       const response = await driveService.files.create({
         requestBody: fileMetadata,
         media: media,
@@ -159,7 +157,7 @@ function HomeScreen() {
           <Text
             style={[styles.chargerTypeText, { flex: 1, textAlign: "right" }]}
           >
-            {`${item?.split("-")[1]}X`}
+            {`x${item?.split("-")[1]}`}
           </Text>
         </View>
       )}

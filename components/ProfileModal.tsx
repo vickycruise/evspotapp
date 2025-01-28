@@ -15,7 +15,6 @@ import React, { useEffect, useState } from "react";
 
 import { Colors } from "@/constants/Colors";
 import Icon from "react-native-vector-icons/Ionicons";
-import { google } from "googleapis";
 import styles from "@/assets/styles";
 
 const ProfileModal = () => {
@@ -23,15 +22,14 @@ const ProfileModal = () => {
 
   const [token, setToken] = useState("");
 
-
   const toggleModal = () => setModalVisible(!modalVisible);
 
   useEffect(() => {
     GoogleSignin.configure({
       webClientId:
-        "211050989236-83pm2hcol3lonjcdcqa0nrd2coems0rt.apps.googleusercontent.com", 
+        "211050989236-83pm2hcol3lonjcdcqa0nrd2coems0rt.apps.googleusercontent.com",
     });
-  }, []);
+  }, [])
 
   const handleGoogleSignIn = async () => {
     try {
@@ -39,7 +37,7 @@ const ProfileModal = () => {
       const userInfo = await GoogleSignin.signIn();
       console.log("User Info:", userInfo);
 
-      const idToken = userInfo.data?.idToken; 
+      const idToken = userInfo.data?.idToken;
       if (idToken) setToken(idToken);
     } catch (error: any) {
       switch (error.code) {
@@ -58,38 +56,6 @@ const ProfileModal = () => {
       }
     }
   };
-
-  const uploadFileToDrive = async (image: string,token:string) => {
-    try {
-      if (!token) {
-        throw new Error("Authentication failed, no ID token available.");
-      }
-
-      const auth = new google.auth.OAuth2();
-      auth.setCredentials({ id_token: token });
-
-      const driveService = google.drive({ version: "v3", auth });
-      const fs = require("fs");
-      const fileMetadata = { name: "photo.png" };
-      const media = {
-        mimeType: "image/jpeg",
-        body: fs.createReadStream(image),
-      };
-
-      const response = await driveService.files.create({
-        requestBody: fileMetadata,
-        media: media,
-        fields: "id",
-      });
-
-      console.log("Uploaded File ID:", response.data.id);
-      return response.data.id;
-    } catch (err) {
-      console.error("Upload Error:", err);
-      Alert.alert("Error", "Failed to upload the file.");
-    }
-  };
-
   return (
     <View
       style={{
@@ -131,11 +97,13 @@ const ProfileModal = () => {
           >
             <Text style={{ marginBottom: 20 }}>Sign in with Google</Text>
 
-            <GoogleSigninButton
-              size={GoogleSigninButton.Size.Wide}
-              color={GoogleSigninButton.Color.Dark}
-              onPress={handleGoogleSignIn}
-            />
+            {
+              <GoogleSigninButton
+                size={GoogleSigninButton.Size.Wide}
+                color={GoogleSigninButton.Color.Dark}
+                onPress={handleGoogleSignIn}
+              />
+            }
 
             {token && (
               <View style={{ marginTop: 20, alignItems: "center" }}>
